@@ -6,6 +6,8 @@ import { Input, InputGroup, InputRightElement } from "@chakra-ui/input";
 import { useState } from 'react';
 import { FaRegEye ,FaEyeSlash } from "react-icons/fa";
 import { useToast } from '@chakra-ui/react'
+import axios from  'axios'
+import { useHistory } from 'react-router-dom';
 
 const Signup = () => {
   const[name , setName] = useState('')
@@ -16,14 +18,13 @@ const Signup = () => {
   const [loading , setLoading] = useState(false)
   const[pic , setPic] = useState();
   const toast = useToast();
+  const {history} = useHistory()
   
   const handleClick =()=>{
     setShow(!show);
   }
 
   const postDetails = (pics)=>{
-
-
     setLoading(true);
     if(pics === undefined){
       toast({
@@ -45,7 +46,6 @@ const Signup = () => {
     
       
       const apiUrl = `https://api.cloudinary.com/v1_1/dmu2iihmh/image/upload?api_key=173524773573671&api_secret=6ELu5IovZokEabzI8zcxiCtHXCE`;
-    
       fetch(apiUrl, {
         method: "POST",
         body: data,
@@ -54,6 +54,7 @@ const Signup = () => {
       .then((data) => {
         setPic(data.url.toString());
         setLoading(false);
+        
       })
       .catch((err) => {
         console.log(err);
@@ -65,14 +66,70 @@ const Signup = () => {
     
   }
 
-  const submitHandler =()=>{
-    toast({
-      title: 'please select an image',
-      position : 'bottom',
-      status: 'warning',
-      duration: 5000,
-      isClosable: true,
-    })
+  const submitHandler = async()=>{
+    setLoading(true)
+    if(!name || !email || !password || !confirmpassword){
+
+      toast({
+        title: 'please fill all the field',
+        position : 'bottom',
+        status: 'warning',
+        duration: 5000,
+        isClosable: true,
+      })
+      setLoading(false);
+      return;
+    }
+
+    if(password !== confirmpassword){
+      toast({
+        title: 'please select an image',
+        position : 'bottom',
+        status: 'warning',
+        duration: 5000,
+        isClosable: true,
+      })
+      return;
+    }
+
+    try{
+      const config = {
+       headers:{
+        "content-type":"application/json",
+       }
+      };
+
+      const {data} = await axios.post(
+        "/api/user",
+        {name,email,password,pic},
+        config
+      );
+
+      toast({
+        title: 'please select an image',
+        position : 'bottom',
+        status: 'warning',
+        duration: 5000,
+        isClosable: true,
+      })
+
+      localStorage.setItem("userInfo",JSON.stringify(data));
+
+      setLoading(false)
+      history.push('/chats')
+
+    }catch(error){
+
+      toast({
+        title: 'Error Occured',
+        description:error.response.data.message,
+        position : 'bottom',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      })
+       
+    }
   }
 
   console.log(name)
@@ -86,7 +143,8 @@ const Signup = () => {
 
       <FormControl id = "email" isRequired>
         <FormLabel >Email</FormLabel>
-         <Input placeholder='Enter your Email' onChange={(e) => setEmail(e.target.value)}/>
+         <Input placeholder='Enter your Email' 
+         onChange={(e) => setEmail(e.target.value)}/>
 
       </FormControl>
        
@@ -94,7 +152,9 @@ const Signup = () => {
         <FormLabel >Password</FormLabel>
          <InputGroup>
          <Input  type={show?'text' : 'password'} 
-           placeholder='Enter your Password' onChange={(e) => setPassword(e.target.value)}/>
+           placeholder='Enter your Password'
+           value={password}
+           onChange={(e) => setPassword(e.target.value)}/>
          <InputRightElement marginLeft= '2px'>
          <Button h="1.75rem" size="sm" onClick={handleClick}>
               {show ? <FaRegEye /> :<FaEyeSlash />  }
