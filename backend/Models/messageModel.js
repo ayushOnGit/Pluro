@@ -10,7 +10,7 @@ const MessageModel = mongoose.Schema({
     chat:{
         type: mongoose.Schema.Tyoes.ObjectId, ref:"Chat",
     },
-
+ 
 },{
     timestamps : true,
 })
